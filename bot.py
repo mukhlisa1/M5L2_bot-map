@@ -10,14 +10,20 @@ def handle_start(message):
 
 @bot.message_handler(commands=['help'])
 def handle_help(message):
-    bot.send_message(message.chat.id, "Доступные команды:  ...")
+    bot.send_message(message.chat.id, '''Доступные команды:  
+                        /show_city <city_name> - показать карту с городом
+        /remember_city <city_name> - сохранить город в базе данных
+        /show_my_cities - показать все сохраненные города''')
     # Допиши команды бота
 
 
 @bot.message_handler(commands=['show_city'])
 def handle_show_city(message):
     city_name = message.text.split()[-1]
-    # Реализуй отрисовку города по запросу
+    user_id = message.chat.id
+    manager.create_grapf(f'{user_id}.png', [city_name])  # Создание карты для города
+    with open(f'{user_id}.png', 'rb') as map:  # Открытие и отправка карты пользователю
+        bot.send_photo(user_id, map)
 
 
 @bot.message_handler(commands=['remember_city'])
@@ -32,7 +38,13 @@ def handle_remember_city(message):
 @bot.message_handler(commands=['show_my_cities'])
 def handle_show_visited_cities(message):
     cities = manager.select_cities(message.chat.id)
-    # Реализуй отрисовку всех городов
+    cities = manager.select_cities(message.chat.id)  # Получение списка городов пользователя
+    if cities:
+        manager.create_grapf(f'{message.chat.id}_cities.png', cities)  # Создание карты для всех городов
+        with open(f'{message.chat.id}_cities.png', 'rb') as map:  # Открытие и отправка карты
+            bot.send_photo(message.chat.id, map)
+    else:
+        bot.send_message(message.chat.id, "У вас пока нет сохраненных городов.")
 
 
 if __name__=="__main__":

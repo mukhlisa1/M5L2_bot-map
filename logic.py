@@ -59,10 +59,52 @@ class DB_Map():
             return coordinates
 
     def create_grapf(self, path, cities):
-        pass
+        # Создание нового графического контекста с указанием проекции карты PlateCarree.
+        # PlateCarree - это простая географическая проекция, где долготы и широты отображаются
+        # как вертикальные и горизонтальные линии соответственно.
+        ax = plt.axes(projection=ccrs.PlateCarree())
+        # Добавление на карту стандартного изображения земного шара.
+        # Это фоновое изображение предоставляется библиотекой Cartopy и включает в себя 
+        # визуализацию поверхности земли, океанов и основных рельефов.
+        ax.stock_img()
+        
+        # Итерация по списку городов для отображения на карте.
+        for city in cities:
+            # Получение координат города. Эта функция должна возвращать кортеж с широтой и долготой города.
+            coordinates = self.get_coordinates(city)
+            
+            # Проверка, что координаты города успешно получены.
+            if coordinates:
+                # Распаковка кортежа координат в переменные lat (широта) и lng (долгота).
+                lat, lng = coordinates
+                
+                # Отрисовка маркера на карте в позиции, заданной координатами города.
+                # 'color='r'' задает цвет маркера красный, 'linewidth=1' задает толщину линии маркера,
+                # 'marker='.'' указывает на форму маркера (точка).
+                plt.plot([lng], [lat], color='b', linewidth=1, marker='.', transform=ccrs.Geodetic())
+                
+                # Добавление текста (названия города) рядом с маркером.
+                # '+3' и '+12' к долготе и широте задают смещение текста относительно маркера,
+                # чтобы текст не перекрывал маркер и был читаемым.
+                plt.text(lng + 3, lat + 12, city, horizontalalignment='left', transform=ccrs.Geodetic())
+    
+        # Сохранение созданного изображения в файл по пути, указанному в аргументе 'path'.
+        plt.savefig(path)
+        
+        # Закрытие контекста matplotlib для освобождения ресурсов.
+        plt.close()
         
     def draw_distance(self, city1, city2):
-        pass
+        # Рисование линии между двумя городами для отображения расстояния
+        city1_coords = self.get_coordinates(city1)
+        city2_coords = self.get_coordinates(city2)
+        fig, ax = plt.subplots(subplot_kw={'projection': ccrs.PlateCarree()})
+        ax.stock_img()
+        plt.plot([city1_coords[1], city2_coords[1]], [city1_coords[0], city2_coords[0]], color='red', linewidth=2, marker='o', transform=ccrs.Geodetic())
+        plt.text(city1_coords[1] + 3, city1_coords[0] + 12, city1, horizontalalignment='left', transform=ccrs.Geodetic())
+        plt.text(city2_coords[1] + 3, city2_coords[0] + 12, city2, horizontalalignment='left', transform=ccrs.Geodetic())
+        plt.savefig('distance_map.png')
+        plt.close()
 
 
 if __name__=="__main__":
