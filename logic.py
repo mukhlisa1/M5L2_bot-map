@@ -4,6 +4,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
+import cartopy.feature as cfeature
 
 
 class DB_Map():
@@ -57,14 +58,37 @@ class DB_Map():
                             WHERE city = ?''', (city_name,))
             coordinates = cursor.fetchone()
             return coordinates
-        
-    def get_user_style(self, user_id):
+     
+    def get_country(self, city_name):
         conn = sqlite3.connect(self.database)
         with conn:
             cursor = conn.cursor()
-            cursor.execute('''SELECT color, marker, line_style
-                            FROM user_styles WHERE user_id=?''', (user_id,))
-            return cursor.fetchone()
+            cursor.execute("SELECT country FROM cities WHERE city = ?", (city_name,))
+            result = cursor.fetchone()
+            return result[0] if result else None
+        
+    def draw_city_region_map(self, path, city_name, padding_deg=10):
+        coordinates = self.get_coordinates(city_name)
+        if not coordinates:
+            return False
+
+        lat, lon = coordinates
+        extent = [lon - padding_deg, lon + padding_deg, lat - padding_deg, lat + padding_deg]
+
+        fig, ax = plt.subplots(figsize=(6, 6), subplot_kw={'projection': ccrs.PlateCarree()})
+        ax.set_extent(extent, crs=ccrs.PlateCarree())
+        ax.add_feature(cfeature.COASTLINE)
+        ax.add_feature(cfeature.BORDERS, linestyle=':')
+        ax.stock_img()
+        ax.set_title(f"{city_name}")
+        plt.plot(lon, lat, marker='o', color='red', transform=ccrs.Geodetic())
+        plt.text(lon + 1, lat + 1, city_name, transform=ccrs.Geodetic())
+        plt.savefig(path)
+        plt.close()
+        return True
+
+
+
 
     def create_grapf(self, path, cities, style):
         ax = plt.axes(projection=ccrs.PlateCarree())

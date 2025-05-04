@@ -24,10 +24,13 @@ def handle_help(message):
 def handle_show_city(message):
     city_name = message.text.split()[-1]
     user_id = message.chat.id
-    style = user_style_selection.get(user_id, {'color': 'b', 'marker': '.', 'line_style': 'None'})
-    manager.create_grapf(f'{user_id}.png', [city_name], style)
-    with open(f'{user_id}.png', 'rb') as map:
-        bot.send_photo(user_id, map)
+
+    map_path = f'{user_id}_city_map.png'
+    if manager.draw_city_region_map(map_path, city_name):
+        with open(map_path, 'rb') as map_file:
+            bot.send_photo(user_id, map_file, caption=f" Карта города {city_name}")
+    else:
+        bot.send_message(user_id, "Город не найден или координаты отсутствуют.")
 
 
 @bot.message_handler(commands=['remember_city'])
