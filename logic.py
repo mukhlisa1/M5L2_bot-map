@@ -57,41 +57,33 @@ class DB_Map():
                             WHERE city = ?''', (city_name,))
             coordinates = cursor.fetchone()
             return coordinates
+        
+    def get_user_style(self, user_id):
+        conn = sqlite3.connect(self.database)
+        with conn:
+            cursor = conn.cursor()
+            cursor.execute('''SELECT color, marker, line_style
+                            FROM user_styles WHERE user_id=?''', (user_id,))
+            return cursor.fetchone()
 
-    def create_grapf(self, path, cities):
-        # Создание нового графического контекста с указанием проекции карты PlateCarree.
-        # PlateCarree - это простая географическая проекция, где долготы и широты отображаются
-        # как вертикальные и горизонтальные линии соответственно.
+    def create_grapf(self, path, cities, style):
         ax = plt.axes(projection=ccrs.PlateCarree())
-        # Добавление на карту стандартного изображения земного шара.
-        # Это фоновое изображение предоставляется библиотекой Cartopy и включает в себя 
-        # визуализацию поверхности земли, океанов и основных рельефов.
         ax.stock_img()
+
+        color = style['color']
+        marker = style['marker']
+        line_style = style['line_style']
         
-        # Итерация по списку городов для отображения на карте.
         for city in cities:
-            # Получение координат города. Эта функция должна возвращать кортеж с широтой и долготой города.
             coordinates = self.get_coordinates(city)
-            
-            # Проверка, что координаты города успешно получены.
             if coordinates:
-                # Распаковка кортежа координат в переменные lat (широта) и lng (долгота).
                 lat, lng = coordinates
-                
-                # Отрисовка маркера на карте в позиции, заданной координатами города.
-                # 'color='r'' задает цвет маркера красный, 'linewidth=1' задает толщину линии маркера,
-                # 'marker='.'' указывает на форму маркера (точка).
-                plt.plot([lng], [lat], color='b', linewidth=1, marker='.', transform=ccrs.Geodetic())
-                
-                # Добавление текста (названия города) рядом с маркером.
-                # '+3' и '+12' к долготе и широте задают смещение текста относительно маркера,
-                # чтобы текст не перекрывал маркер и был читаемым.
+                plt.plot([lng], [lat], color=color, marker=marker,
+                    linestyle='None' if line_style == 'None' else line_style,
+                    transform=ccrs.Geodetic())
                 plt.text(lng + 3, lat + 12, city, horizontalalignment='left', transform=ccrs.Geodetic())
-    
-        # Сохранение созданного изображения в файл по пути, указанному в аргументе 'path'.
+
         plt.savefig(path)
-        
-        # Закрытие контекста matplotlib для освобождения ресурсов.
         plt.close()
         
     def draw_distance(self, city1, city2):
